@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movie Review DApp</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+</head>
+<body>
+  <h2>Movie Review DApp</h2>
+
+  <h3>Search Movie</h3>
+  <input id="movieTitle" placeholder="Enter movie title"><br>
+  <button onclick="searchMovie()">Search</button>
+  <div id="movieDetails"></div>
+
+  <h3>Add Review</h3>
+  <input id="reviewMovieId" placeholder="Movie ID (e.g., tt0111161)"><br>
+  <input id="ipfsHash" placeholder="IPFS Hash for review"><br>
+  <input id="rating" type="number" min="1" max="5" placeholder="Rating (1-5)"><br>
+  <button onclick="addReview()">Add Review</button>
+
+  <h3>View Reviews</h3>
+  <input id="viewMovieId" placeholder="Movie ID"><br>
+  <button onclick="viewReviews()">View Reviews</button>
+  <pre id="reviewsOutput"></pre>
+
+  <script>
+    const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"; // Deployed contract address
+    const contractABI = [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "movieId",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "ipfsHash",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint8",
+          "name": "rating",
+          "type": "uint8"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "reviewer",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "ReviewAdded",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_movieId",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "_ipfsHash",
+          "type": "string"
+        },
+        {
+          "internalType": "uint8",
+          "name": "_rating",
+          "type": "uint8"
+        }
+      ],
+      "name": "addReview",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_movieId",
+          "type": "string"
+        }
+      ],
+      "name": "getReviewCount",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_movieId",
+          "type": "string"
+        }
+      ],
+      "name": "getReviews",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "string",
+              "name": "ipfsHash",
+              "type": "string"
+            },
+            {
+              "internalType": "uint8",
+              "name": "rating",
+              "type": "uint8"
+            },
+            {
+              "internalType": "address",
+              "name": "reviewer",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct MovieReview.Review[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ];
+
+    const apiKey = "df0f1a8e";
+    let provider, signer, contract;
+
+    window.onload = async function() {
+      if (typeof window.ethereum !== "undefined") {
+        try {
+          await window.ethereum.request({ method: "eth_requestAccounts" });
+          provider = new ethers.providers.Web3Provider(window.ethereum);
+          signer = provider.getSigner();
+          contract = new ethers.Contract(contractAddress, contractABI, signer);
+          const address = await signer.getAddress();
+          console.log("Connected to MetaMask:", address);
+          alert("Connected to MetaMask: " + address);
+        } catch (err) {
+          alert("MetaMask connection failed: " + err.message);
+        }
+      } else {
+        alert("MetaMask not detected! Please install MetaMask.");
+      }
+    };
+
+    async function searchMovie() {
+      const title = document.getElementById("movieTitle").value;
+      const response = await fetch(`http://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${apiKey}`);
+      const data = await response.json();
+      if (data.Response === "True") {
+        document.getElementById("movieDetails").innerHTML = `
+          <h4>${data.Title} (${data.Year})</h4>
+          <p><strong>Plot:</strong> ${data.Plot}</p>
+          <p><strong>Director:</strong> ${data.Director}</p>
+          <p><strong>Actors:</strong> ${data.Actors}</p>
+          <p><strong>IMDB ID:</strong> ${data.imdbID}</p>
+          <img src="${data.Poster}" alt="Poster" style="max-width: 200px;">
+        `;
+      } else {
+        document.getElementById("movieDetails").innerHTML = "<p>Movie not found.</p>";
+      }
+    }
+
+    async function addReview() {
+      const movieId = document.getElementById("reviewMovieId").value.trim();
+      const ipfsHash = document.getElementById("ipfsHash").value.trim();
+      const rating = parseInt(document.getElementById("rating").value);
+
+      if (!movieId) {
+        alert("Please enter a Movie ID.");
+        return;
+      }
+      if (!ipfsHash) {
+        alert("Please enter an IPFS Hash.");
+        return;
+      }
+      if (rating < 1 || rating > 5 || isNaN(rating)) {
+        alert("Rating must be between 1 and 5.");
+        return;
+      }
+
+      try {
+        const tx = await contract.addReview(movieId, ipfsHash, rating);
+        await tx.wait();
+        alert("Review added successfully!");
+      } catch (error) {
+        alert("Error adding review: " + error.message);
+      }
+    }
+
+    async function viewReviews() {
+      const movieId = document.getElementById("viewMovieId").value.trim();
+      if (!movieId) {
+        document.getElementById("reviewsOutput").textContent = "Please enter a Movie ID.";
+        return;
+      }
+      try {
+        const reviews = await contract.getReviews(movieId);
+        let output = `Reviews for ${movieId}:\n\n`;
+        if (reviews.length === 0) {
+          output += "No reviews found for this movie.\n";
+        } else {
+          reviews.forEach((review, index) => {
+            output += `Review ${index + 1}:\n`;
+            output += `  IPFS Hash: ${review.ipfsHash}\n`;
+            output += `  Rating: ${review.rating}/5\n`;
+            output += `  Reviewer: ${review.reviewer}\n`;
+            output += `  Timestamp: ${new Date(review.timestamp * 1000).toLocaleString()}\n\n`;
+          });
+        }
+        document.getElementById("reviewsOutput").textContent = output;
+      } catch (error) {
+        document.getElementById("reviewsOutput").textContent = "Error fetching reviews: " + error.message;
+      }
+    }
+  </script>
+
+</body>
+</html>
