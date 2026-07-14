@@ -473,7 +473,7 @@
           sessionStorage.setItem("user", address);
           showToast("Authenticated via MetaMask! Redirecting...", "success");
           setTimeout(() => {
-            window.location.href = "movie-page.html";
+            window.location.href = "index.html";
           }, 1200);
         } catch (err) {
           showToast("MetaMask Connection Cancelled: " + err.message, "error");
@@ -484,7 +484,7 @@
           sessionStorage.setItem("user", "DemoWeb3User");
           showToast("Authenticated via Demo Wallet Address! Redirecting...", "success");
           setTimeout(() => {
-            window.location.href = "movie-page.html";
+            window.location.href = "index.html";
           }, 1200);
         }, 1500);
       }
@@ -495,7 +495,7 @@
       if (sessionStorage.getItem("user")) {
         showToast("Active session found. Redirecting to Dashboard...", "info");
         setTimeout(() => {
-          window.location.href = "movie-page.html";
+          window.location.href = "index.html";
         }, 1000);
       }
     }
