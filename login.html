@@ -3,407 +3,322 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CineReview - Sign In</title>
+  <title>CineReview - Immersive Sign In & Portal</title>
   <!-- Google Fonts: Outfit -->
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Ethers.js CDN for Web3/MetaMask Login -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <!-- Tailwind CSS CDN for premium utility styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              base: '#080b11',
+              surface: '#0f1422',
+              panel: '#161f33',
+              primary: '#6366f1',
+              primaryHover: '#4f46e5',
+              secondary: '#d946ef',
+              accent: '#10b981',
+              textMain: '#f8fafc',
+              textMuted: '#94a3b8',
+              border: 'rgba(255, 255, 255, 0.08)',
+              borderFocus: 'rgba(99, 102, 241, 0.5)',
+              shadowGlow: 'rgba(99, 102, 241, 0.15)',
+            }
+          },
+          fontFamily: {
+            outfit: ['Outfit', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
 
   <style>
     :root {
-      --bg-base: #080b11;
-      --bg-surface: #0f1422;
-      --bg-panel: #161f33;
-      --primary: #6366f1; /* Indigo */
-      --primary-hover: #4f46e5;
-      --secondary: #d946ef; /* Magenta */
-      --accent: #10b981; /* Emerald */
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
+      --primary: #6366f1;
+      --secondary: #d946ef;
+      --accent: #10b981;
       --border: rgba(255, 255, 255, 0.08);
-      --border-focus: rgba(99, 102, 241, 0.5);
-      --shadow-glow: rgba(99, 102, 241, 0.15);
-      --font-family: 'Outfit', sans-serif;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
-      background-color: var(--bg-base);
-      color: var(--text-main);
-      font-family: var(--font-family);
+      background-color: #080b11;
+      color: #f8fafc;
+      font-family: 'Outfit', sans-serif;
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      background-image: 
-        radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.08) 0%, transparent 45%),
-        radial-gradient(circle at 85% 85%, rgba(217, 70, 239, 0.08) 0%, transparent 45%);
-      background-attachment: fixed;
-      padding: 1.5rem;
+      overflow-x: hidden;
     }
 
-    /* Logo Header */
-    .logo-container {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 2rem;
-      animation: fadeInDown 0.6s ease-out;
-    }
-
-    .logo-icon {
-      font-size: 2.2rem;
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      font-weight: 700;
-    }
-
-    .logo-text {
-      font-size: 1.8rem;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-    }
-
-    /* Glassmorphic Login Card */
-    .login-card {
-      background: rgba(15, 20, 34, 0.7);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+    /* Custom Glassmorphism Utility */
+    .glass-card {
+      background: rgba(15, 20, 34, 0.65);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border: 1px solid var(--border);
-      border-radius: 20px;
-      width: 100%;
-      max-width: 440px;
-      padding: 2.5rem;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-      animation: scaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
     }
 
-    .card-title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-      text-align: center;
-    }
-
-    .card-subtitle {
-      font-size: 0.9rem;
-      color: var(--text-muted);
-      margin-bottom: 2rem;
-      text-align: center;
-    }
-
-    /* Form Fields */
-    .form-group {
-      margin-bottom: 1.25rem;
-      position: relative;
-    }
-
-    .form-group label {
-      display: block;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-bottom: 0.5rem;
-      font-weight: 500;
-    }
-
-    .input-wrapper {
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
-
-    input {
-      width: 100%;
-      padding: 0.8rem 1rem;
-      background: rgba(22, 31, 51, 0.8);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      color: var(--text-main);
-      font-family: var(--font-family);
-      font-size: 0.95rem;
-      transition: all 0.3s ease;
-    }
-
-    input:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-    }
-
-    /* Eye toggle icon */
-    .toggle-password {
-      position: absolute;
-      right: 12px;
-      cursor: pointer;
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      user-select: none;
-      transition: color 0.3s;
-    }
-
-    .toggle-password:hover {
-      color: var(--text-main);
-    }
-
-    /* Card Options (Remember & Forgot) */
-    .options-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.75rem;
-      font-size: 0.85rem;
-    }
-
-    .remember-me {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      cursor: pointer;
-      color: var(--text-muted);
-    }
-
-    .remember-me input {
-      width: 16px;
-      height: 16px;
-      cursor: pointer;
-      accent-color: var(--primary);
-    }
-
-    .forgot-link {
-      color: var(--primary);
-      text-decoration: none;
-      font-weight: 500;
-      transition: color 0.3s;
-    }
-
-    .forgot-link:hover {
-      color: var(--secondary);
-    }
-
-    /* Buttons */
-    .web3-login-btn {
-      width: 100%;
-      padding: 1.1rem 1.5rem;
-      background: rgba(227, 117, 34, 0.08);
-      border: 1px solid rgba(227, 117, 34, 0.4);
-      border-radius: 12px;
-      color: var(--text-main);
-      font-family: var(--font-family);
-      font-size: 1.05rem;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.75rem;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(227, 117, 34, 0.15);
-    }
-
-    .web3-login-btn:hover {
-      background: rgba(227, 117, 34, 0.15);
-      border-color: rgba(227, 117, 34, 0.7);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(227, 117, 34, 0.25);
-    }
-
-    .web3-login-btn:active {
-      transform: translateY(0);
-    }
-
-    /* Divider */
-    .divider {
-      display: flex;
-      align-items: center;
-      text-align: center;
-      margin: 1.75rem 0;
-      color: var(--text-muted);
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .divider::before, .divider::after {
-      content: '';
-      flex: 1;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .divider:not(:empty)::before {
-      margin-right: .75em;
-    }
-
-    .divider:not(:empty)::after {
-      margin-left: .75em;
-    }
-
-    /* OAuth Social Group */
-    .oauth-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    .oauth-btn {
-      width: 100%;
-      padding: 0.75rem 1rem;
-      background: rgba(22, 31, 51, 0.6);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      color: var(--text-main);
-      font-family: var(--font-family);
-      font-size: 0.9rem;
-      font-weight: 500;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.75rem;
-      transition: all 0.3s ease;
-    }
-
-    .oauth-btn:hover {
-      background: rgba(22, 31, 51, 0.9);
-      border-color: rgba(255, 255, 255, 0.2);
-      transform: translateY(-1px);
-    }
-
-    .oauth-btn svg {
-      width: 18px;
-      height: 18px;
-    }
-
-    /* Toast Notification */
-    .toast-container {
+    /* Interactive Spotlights in BG */
+    #backgroundCanvas {
       position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 1000;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      max-width: 400px;
-      width: 90%;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
     }
 
-    .toast {
-      background: var(--bg-panel);
-      border-left: 4px solid var(--primary);
-      color: var(--text-main);
-      padding: 1rem 1.25rem;
-      border-radius: 8px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-      font-size: 0.9rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
-      animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-      border: 1px solid var(--border);
-      border-left-width: 4px;
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.5; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(1.05); }
     }
 
-    .toast.success {
-      border-left-color: var(--accent);
+    .animate-pulse-glow {
+      animation: pulseGlow 4s infinite ease-in-out;
     }
 
-    .toast.error {
-      border-left-color: #ef4444;
-    }
-
-    .toast.warning {
-      border-left-color: #f59e0b;
-    }
-
-    .toast-close {
-      cursor: pointer;
-      color: var(--text-muted);
-      font-size: 1.2rem;
-      line-height: 1;
-    }
-
-    .toast-close:hover {
-      color: white;
-    }
-
-    /* Keyframes */
-    @keyframes fadeInDown {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes scaleIn {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
-    }
-
-    @keyframes slideIn {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-
-    /* Footer link */
-    .signup-text {
-      text-align: center;
-      margin-top: 1.5rem;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-    }
-
-    .signup-link {
-      color: var(--primary);
-      text-decoration: none;
-      font-weight: 600;
-    }
-
-    .signup-link:hover {
-      color: var(--secondary);
+    /* Toast Notification style override */
+    .toast-card {
+      background: rgba(22, 31, 51, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
     }
   </style>
 </head>
-<body>
+<body class="flex flex-col items-center justify-center min-h-screen relative p-4 md:p-8">
 
-  <div class="logo-container">
-    <span class="logo-icon">🎬</span>
-    <span class="logo-text">CineReview</span>
+  <!-- Interactive Canvas Background (Projector Spotlights & Dust Particles) -->
+  <canvas id="backgroundCanvas"></canvas>
+
+  <div class="relative z-10 w-full max-w-md flex flex-col items-center" id="portalContainer">
+    
+    <!-- BRAND HEADER -->
+    <div class="flex items-center gap-3 mb-6 cursor-pointer select-none transition-transform duration-300 hover:scale-105" onclick="playBeep(440, 0.1)" id="brandHeader">
+      <div class="text-4xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent font-extrabold flex items-center">
+        <span class="mr-2 filter drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]">🎬</span>
+        <span class="font-outfit tracking-tight">CineReview</span>
+      </div>
+      <span class="text-xs px-2 py-1 rounded bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-semibold tracking-wider uppercase">v2.0 Web3</span>
+    </div>
+
+    <!-- MAIN SIGN IN CARD -->
+    <div id="authCardContainer" class="w-full transition-all duration-500 transform scale-100 opacity-100">
+      <div class="glass-card rounded-3xl p-6 md:p-8 relative overflow-hidden transition-all duration-300 shadow-2xl" id="tiltCard">
+        
+        <!-- Subtle interactive border shine -->
+        <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-pink-500/5 pointer-events-none"></div>
+        
+        <h2 class="text-2xl font-bold text-center text-white mb-1">Connect Wallet</h2>
+        <p class="text-sm text-brand-textMuted text-center mb-8">Connect your Web3 wallet to share and view decentralized movie reviews</p>
+
+        <div class="space-y-6">
+          <div class="text-center py-6 px-4 bg-brand-surface/40 rounded-2xl border border-white/5 mb-4">
+            <div class="relative w-16 h-16 mx-auto mb-3 flex items-center justify-center bg-orange-500/10 rounded-full border border-orange-500/20">
+              <span class="text-3xl animate-pulse-glow">🦊</span>
+            </div>
+            <h3 class="text-white font-semibold text-base mb-1">Verify Decentralized Identity</h3>
+            <p class="text-xs text-brand-textMuted leading-relaxed max-w-xs mx-auto">Interacts with Sepolia Smart Contracts to guarantee tamper-proof user reviews.</p>
+          </div>
+
+          <!-- Connect button -->
+          <button onclick="handleMetaMaskLogin()" class="w-full py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all duration-300 font-bold border border-orange-500/40 bg-orange-500/10 hover:bg-orange-500/25 active:scale-[0.99] cursor-pointer hover:shadow-[0_0_20px_rgba(227,117,34,0.2)]">
+            <svg viewBox="0 0 32 32" class="w-6 h-6 animate-bounce">
+              <path fill="#e17726" d="M30.8 14.5l-2.4-7.9-3.2-3.8-9.2-1.3-9.2 1.3-3.2 3.8-2.4 7.9c-.3.9.1 1.9.9 2.3l11.4 7.1 2.9-2.3-2.9-2.6-3.8-1-5.6.8.6-4.5 5 1.3 3.8.3.6-4.5-3.8-.5-5.6-1.5 1.7-2.6 6.8.5 3.9-.9.5 4.8-3.9 1.1-2.9 2.9v1.9l2.9.8h3.8l2.9-2.1.2-1.3z" />
+            </svg>
+            <span style="color: #e17726;" class="tracking-wide text-sm">Connect MetaMask Wallet</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="login-card">
-    <h2 class="card-title">Connect Wallet</h2>
-    <p class="card-subtitle" style="margin-bottom: 1.75rem;">Connect your Web3 wallet to share and view decentralized movie reviews</p>
-
-    <!-- MetaMask Web3 Login -->
-    <button class="web3-login-btn" onclick="handleMetaMaskLogin()">
-      <svg viewBox="0 0 32 32" width="28" height="28">
-        <path fill="#e17726" d="M30.8 14.5l-2.4-7.9-3.2-3.8-9.2-1.3-9.2 1.3-3.2 3.8-2.4 7.9c-.3.9.1 1.9.9 2.3l11.4 7.1 2.9-2.3-2.9-2.6-3.8-1-5.6.8.6-4.5 5 1.3 3.8.3.6-4.5-3.8-.5-5.6-1.5 1.7-2.6 6.8.5 3.9-.9.5 4.8-3.9 1.1-2.9 2.9v1.9l2.9.8h3.8l2.9-2.1.2-1.3z"/>
-      </svg>
-      <span>Connect MetaMask Wallet</span>
-    </button>
-  </div>
-
-  <div class="toast-container" id="toastContainer"></div>
+  <!-- TOAST SYSTEM CONTAINER -->
+  <div class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full" id="toastContainer"></div>
 
   <script>
+    /* UI AUDIO SYNTHESIS via Web Audio API */
+    let audioCtx = null;
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    function playBeep(freq = 440, duration = 0.1, type = 'sine') {
+      try {
+        initAudio();
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (err) {}
+    }
+
+    function playSuccessSound() {
+      setTimeout(() => playBeep(523.25, 0.15, 'triangle'), 0); // C5
+      setTimeout(() => playBeep(659.25, 0.15, 'triangle'), 80); // E5
+      setTimeout(() => playBeep(783.99, 0.25, 'triangle'), 160); // G5
+    }
+
+    function playErrorSound() {
+      setTimeout(() => playBeep(180, 0.2, 'sawtooth'), 0);
+      setTimeout(() => playBeep(140, 0.3, 'sawtooth'), 120);
+    }
+
+    /* INTERACTIVE CANVAS BACKGROUND: Spotlights & Cinema Dust */
+    const canvas = document.getElementById("backgroundCanvas");
+    const ctx = canvas.getContext("2d");
+    
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+    let mouse = { x: width / 2, y: height / 2, targetX: width / 2, targetY: height / 2 };
+
+    window.addEventListener('resize', () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      mouse.targetX = e.clientX;
+      mouse.targetY = e.clientY;
+    });
+
+    // Dust particles
+    const particles = [];
+    const particleCount = 45;
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        radius: Math.random() * 1.8 + 0.4,
+        speedX: Math.random() * 0.3 - 0.15,
+        speedY: Math.random() * 0.2 - 0.05,
+        alpha: Math.random() * 0.4 + 0.1
+      });
+    }
+
+    function animateBackground() {
+      mouse.x += (mouse.targetX - mouse.x) * 0.05;
+      mouse.y += (mouse.targetY - mouse.y) * 0.05;
+
+      ctx.fillStyle = "#080b11";
+      ctx.fillRect(0, 0, width, height);
+
+      // Projector Light 1
+      const grad1 = ctx.createRadialGradient(
+        width * 0.15 + (mouse.x * 0.05), height * 0.15 + (mouse.y * 0.05), 10,
+        width * 0.15, height * 0.15, Math.max(width, height) * 0.5
+      );
+      grad1.addColorStop(0, 'rgba(99, 102, 241, 0.15)');
+      grad1.addColorStop(0.5, 'rgba(99, 102, 241, 0.03)');
+      grad1.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad1;
+      ctx.fillRect(0, 0, width, height);
+
+      // Mouse Spotlight
+      const grad2 = ctx.createRadialGradient(
+        mouse.x, mouse.y, 0,
+        mouse.x, mouse.y, Math.max(width, height) * 0.3
+      );
+      grad2.addColorStop(0, 'rgba(217, 70, 239, 0.08)');
+      grad2.addColorStop(0.5, 'rgba(217, 70, 239, 0.015)');
+      grad2.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad2;
+      ctx.fillRect(0, 0, width, height);
+
+      // Render dust
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.x += p.speedX;
+        p.y += p.speedY;
+
+        if (p.x < 0) p.x = width;
+        if (p.x > width) p.x = 0;
+        if (p.y < 0) p.y = height;
+        if (p.y > height) p.y = 0;
+
+        const distToMouse = Math.hypot(p.x - mouse.x, p.y - mouse.y);
+        let illumination = 1.0;
+        if (distToMouse < 250) {
+          illumination += (1 - distToMouse / 250) * 1.5;
+        }
+
+        ctx.fillStyle = `rgba(148, 163, 184, ${p.alpha * illumination})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      requestAnimationFrame(animateBackground);
+    }
+    animateBackground();
+
+    /* CARD 3D PARALLAX EFFECT */
+    const cardElement = document.getElementById("tiltCard");
+    window.addEventListener('mousemove', (e) => {
+      const bounding = cardElement.getBoundingClientRect();
+      const x = e.clientX - bounding.left;
+      const y = e.clientY - bounding.top;
+      const xc = bounding.width / 2;
+      const yc = bounding.height / 2;
+      const angleX = -(yc - y) / 18; 
+      const angleY = (xc - x) / 18; 
+      cardElement.style.transform = `perspective(1000px) rotateX(${angleX}deg) rotateY(${angleY}deg) scale3d(1.01, 1.01, 1.01)`;
+    });
+
+    cardElement.addEventListener('mouseleave', () => {
+      cardElement.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
+    });
+  </script>
+
+  <script>
+    /* DYNAMIC TOAST SYSTEM */
     function showToast(message, type = 'info') {
       const container = document.getElementById("toastContainer");
       const toast = document.createElement("div");
-      toast.className = `toast ${type}`;
+      
+      let borderColor = 'var(--primary)';
+      if (type === 'success') borderColor = 'var(--accent)';
+      else if (type === 'error') borderColor = '#ef4444';
+      else if (type === 'warning') borderColor = '#f59e0b';
+
+      toast.className = `toast-card p-4 rounded-xl shadow-lg border border-white/5 flex justify-between items-center gap-3 transition-all duration-300 transform translate-x-12 opacity-0 text-xs`;
+      toast.style.borderLeft = `4px solid ${borderColor}`;
       toast.innerHTML = `
-        <span>${message}</span>
-        <span class="toast-close" onclick="this.parentElement.remove()">&times;</span>
+        <span class="font-medium text-slate-100">${message}</span>
+        <button class="text-brand-textMuted hover:text-white text-base cursor-pointer" onclick="this.parentElement.remove()">&times;</button>
       `;
       container.appendChild(toast);
-      
+
+      setTimeout(() => {
+        toast.classList.remove("translate-x-12", "opacity-0");
+      }, 50);
+
       setTimeout(() => {
         if (toast.parentElement) {
-          toast.remove();
+          toast.classList.add("opacity-0", "translate-y-2");
+          setTimeout(() => toast.remove(), 300);
         }
       }, 5000);
     }
@@ -415,6 +330,7 @@
         const currentChainId = await window.ethereum.request({ method: "eth_chainId" });
         if (currentChainId !== SEPOLIA_CHAIN_ID) {
           showToast("Switching network to Sepolia...", "info");
+          playBeep(350, 0.15);
           try {
             await window.ethereum.request({
               method: "wallet_switchEthereumChain",
@@ -443,10 +359,12 @@
                 return true;
               } catch (addError) {
                 showToast("Failed to add Sepolia network: " + addError.message, "error");
+                playErrorSound();
                 return false;
               }
             } else {
               showToast("Failed to switch network: " + switchError.message, "error");
+              playErrorSound();
               return false;
             }
           }
@@ -454,11 +372,13 @@
         return true;
       } catch (err) {
         showToast("Error checking network: " + err.message, "error");
+        playErrorSound();
         return false;
       }
     }
 
     async function handleMetaMaskLogin() {
+      playBeep(440, 0.1);
       if (typeof window.ethereum !== "undefined") {
         try {
           const isSepolia = await ensureSepoliaNetwork();
@@ -471,17 +391,21 @@
           const address = accounts[0];
           
           sessionStorage.setItem("user", address);
+          playSuccessSound();
           showToast("Authenticated via MetaMask! Redirecting...", "success");
           setTimeout(() => {
             window.location.href = "index.html";
           }, 1200);
         } catch (err) {
+          playErrorSound();
           showToast("MetaMask Connection Cancelled: " + err.message, "error");
         }
       } else {
+        playErrorSound();
         showToast("MetaMask extension not found! Falling back to demo login.", "warning");
         setTimeout(() => {
           sessionStorage.setItem("user", "DemoWeb3User");
+          playSuccessSound();
           showToast("Authenticated via Demo Wallet Address! Redirecting...", "success");
           setTimeout(() => {
             window.location.href = "index.html";

@@ -1,526 +1,207 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CineReview - Decentralized Movie Reviews</title>
+  <title>CineReview - Immersive Decentralized Cinema Reviews</title>
   <!-- Google Fonts: Outfit -->
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Ethers.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              base: '#080b11',
+              surface: '#0f1422',
+              panel: '#161f33',
+              primary: '#6366f1',
+              primaryHover: '#4f46e5',
+              secondary: '#d946ef',
+              accent: '#10b981',
+              textMain: '#f8fafc',
+              textMuted: '#94a3b8',
+              border: 'rgba(255, 255, 255, 0.08)',
+              borderFocus: 'rgba(99, 102, 241, 0.5)',
+              shadowGlow: 'rgba(99, 102, 241, 0.15)',
+            }
+          },
+          fontFamily: {
+            outfit: ['Outfit', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
   <style>
     :root {
-      --bg-base: #080b11;
-      --bg-surface: #0f1422;
-      --bg-panel: #161f33;
       --primary: #6366f1;
-      /* Indigo */
-      --primary-hover: #4f46e5;
       --secondary: #d946ef;
-      /* Magenta */
       --accent: #10b981;
-      /* Emerald */
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
       --border: rgba(255, 255, 255, 0.08);
-      --border-focus: rgba(99, 102, 241, 0.5);
-      --shadow-glow: rgba(99, 102, 241, 0.15);
-      --font-family: 'Outfit', sans-serif;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
-      background-color: var(--bg-base);
-      color: var(--text-main);
-      font-family: var(--font-family);
+      background-color: #080b11;
+      color: #f8fafc;
+      font-family: 'Outfit', sans-serif;
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      background-image:
-        radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.05) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, rgba(217, 70, 239, 0.05) 0%, transparent 40%);
-      background-attachment: fixed;
+      overflow-x: hidden;
     }
 
-    /* Navbar */
-    header {
-      background: rgba(15, 20, 34, 0.8);
+    /* Custom Glassmorphism Utility */
+    .glass-card {
+      background: rgba(15, 20, 34, 0.65);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+    }
+
+    .glass-modal {
+      background: rgba(10, 12, 22, 0.95);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    /* Interactive Spotlights in BG */
+    #backgroundCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Toast Notification style override */
+    .toast-card {
+      background: rgba(22, 31, 51, 0.8);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      padding: 1rem 2rem;
-    }
-
-    .nav-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .logo-area {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .logo-icon {
-      font-size: 1.8rem;
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      font-weight: 700;
-    }
-
-    .logo-text {
-      font-size: 1.4rem;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-    }
-
-    .wallet-status {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: var(--bg-panel);
-      padding: 0.5rem 1rem;
-      border-radius: 9999px;
-      border: 1px solid var(--border);
-      font-size: 0.85rem;
-      font-weight: 500;
-      transition: all 0.3s ease;
-    }
-
-    .wallet-indicator {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #ef4444;
-      /* Default disconnected */
-      box-shadow: 0 0 8px #ef4444;
-    }
-
-    .wallet-indicator.connected {
-      background: var(--accent);
-      box-shadow: 0 0 8px var(--accent);
-    }
-
-    .wallet-address {
-      color: var(--text-muted);
-      font-family: monospace;
-    }
-
-    /* Main Layout */
-    main {
-      flex: 1;
-      max-width: 1200px;
-      width: 100%;
-      margin: 2rem auto;
-      padding: 0 1.5rem;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-    }
-
-    @media (max-width: 900px) {
-      main {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .panel {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 2rem;
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .panel:hover {
-      box-shadow: 0 8px 30px var(--shadow-glow);
-    }
-
-    h3 {
-      font-size: 1.25rem;
-      font-weight: 600;
-      margin-bottom: 1.5rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      border-left: 3px solid var(--primary);
-      padding-left: 0.75rem;
-    }
-
-    /* Forms */
-    .form-group {
-      margin-bottom: 1.25rem;
-    }
-
-    .form-group label {
-      display: block;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-bottom: 0.5rem;
-      font-weight: 500;
-    }
-
-    input {
-      width: 100%;
-      padding: 0.8rem 1rem;
-      background: var(--bg-panel);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text-main);
-      font-family: var(--font-family);
-      font-size: 0.95rem;
-      transition: all 0.3s ease;
-    }
-
-    input:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-    }
-
-    button {
-      width: 100%;
-      padding: 0.8rem 1.5rem;
-      background: linear-gradient(135deg, var(--primary), var(--primary-hover));
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-family: var(--font-family);
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-    }
-
-    button:active {
-      transform: translateY(1px);
-    }
-
-    /* Movie details rendering */
-    #movieDetails {
-      margin-top: 1.5rem;
-    }
-
-    .movie-card {
-      background: var(--bg-panel);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
-      display: flex;
-      gap: 1.5rem;
-      margin-top: 1rem;
-      animation: fadeIn 0.4s ease-out;
-    }
-
-    @media (max-width: 600px) {
-      .movie-card {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-      }
-    }
-
-    .movie-poster {
-      max-width: 130px;
-      border-radius: 8px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-      object-fit: cover;
-    }
-
-    .movie-info {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .movie-title {
-      font-size: 1.3rem;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-
-    .movie-meta {
-      font-size: 0.85rem;
-      color: var(--primary);
-      font-weight: 500;
-    }
-
-    .movie-plot {
-      font-size: 0.9rem;
-      color: var(--text-muted);
-      line-height: 1.4;
-    }
-
-    .movie-details-list {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-    }
-
-    /* Review output */
-    #reviewsOutput {
-      margin-top: 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .review-card {
-      background: var(--bg-panel);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.25rem;
-      animation: fadeIn 0.3s ease-out;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .review-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .stars {
-      color: #fbbf24;
-      /* Gold stars */
-      font-size: 1.1rem;
-      letter-spacing: 2px;
-    }
-
-    .review-meta {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      display: flex;
-      justify-content: space-between;
-      gap: 1rem;
-    }
-
-    .reviewer-address {
-      font-family: monospace;
-      color: var(--primary);
-    }
-
-    .ipfs-hash-box {
-      font-size: 0.85rem;
-      background: rgba(0, 0, 0, 0.2);
-      padding: 0.5rem 0.75rem;
-      border-radius: 6px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      color: var(--text-muted);
-      word-break: break-all;
-      font-family: monospace;
-    }
-
-    /* Toast Notification */
-    .toast-container {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 1000;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      max-width: 400px;
-      width: 90%;
-    }
-
-    .toast {
-      background: var(--bg-panel);
-      border-left: 4px solid var(--primary);
-      color: var(--text-main);
-      padding: 1rem 1.25rem;
-      border-radius: 8px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-      font-size: 0.9rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
-      animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-      border: 1px solid var(--border);
-      border-left-width: 4px;
-    }
-
-    .toast.success {
-      border-left-color: var(--accent);
-    }
-
-    .toast.error {
-      border-left-color: #ef4444;
-    }
-
-    .toast.warning {
-      border-left-color: #f59e0b;
-    }
-
-    .toast-close {
-      cursor: pointer;
-      color: var(--text-muted);
-      font-size: 1.2rem;
-      line-height: 1;
-    }
-
-    .toast-close:hover {
-      color: white;
-    }
-
-    /* Utility */
-    .empty-state {
-      text-align: center;
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      padding: 2rem 0;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes slideIn {
-      from {
-        transform: translateX(100%);
-        opacity: 0;
-      }
-
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
-    }
-
-    /* Footer */
-    footer {
-      text-align: center;
-      padding: 2rem;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      border-top: 1px solid var(--border);
-      margin-top: auto;
     }
   </style>
 </head>
+<body class="flex flex-col min-h-screen relative">
 
-<body>
+  <!-- Interactive Canvas Background (Projector Spotlights & Dust Particles) -->
+  <canvas id="backgroundCanvas"></canvas>
 
-  <header>
-    <div class="nav-container">
-      <div class="logo-area">
-        <span class="logo-icon">🎬</span>
-        <span class="logo-text">CineReview</span>
+  <!-- Navbar Header -->
+  <header class="relative z-10 w-full glass-card border-b border-white/5 sticky top-0 backdrop-blur-md">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="flex items-center gap-2 cursor-pointer select-none transition-transform duration-300 hover:scale-105" onclick="playBeep(440, 0.1)">
+        <span class="text-2xl filter drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]">🎬</span>
+        <span class="font-outfit tracking-tight text-xl font-bold bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">CineReview</span>
       </div>
-      <div style="display: flex; align-items: center; gap: 1rem;">
+
+      <div class="flex items-center gap-3">
+        <!-- Wallet Area -->
         <div id="walletArea">
-          <button id="connectWalletBtn" onclick="connectWallet()"
-            style="background: linear-gradient(135deg, var(--secondary), var(--primary)); padding: 0.5rem 1.2rem; border-radius: 9999px; border: none; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: white; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(217, 70, 239, 0.2); width: auto; display: flex; align-items: center; gap: 0.5rem;"
-            onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 15px rgba(217, 70, 239, 0.45)'"
-            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 10px rgba(217, 70, 239, 0.2)'">
+          <button id="connectWalletBtn" onclick="connectWallet()" class="px-4 py-2 bg-gradient-to-r from-indigo-500 to-pink-500 text-white text-xs font-semibold rounded-full hover:shadow-[0_0_15px_rgba(99,102,241,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center gap-1.5 cursor-pointer">
             <span>🔌 Connect Wallet</span>
           </button>
-          <div class="wallet-status" id="walletStatus"
-            style="display: none; align-items: center; gap: 0.5rem; background: var(--bg-panel); padding: 0.5rem 1rem; border-radius: 9999px; border: 1px solid var(--border); font-size: 0.85rem; font-weight: 500;">
-            <div class="wallet-indicator" id="walletIndicator"></div>
-            <span id="walletLabel">Connecting MetaMask...</span>
+          
+          <div class="flex items-center gap-2 bg-brand-panel border border-white/10 px-3 py-1.5 rounded-full text-xs font-medium" id="walletStatus" style="display: none;">
+            <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" id="walletIndicator"></span>
+            <span class="text-brand-textMuted font-mono" id="walletLabel">Connecting MetaMask...</span>
           </div>
         </div>
-        <div id="userProfile" onclick="openProfileModal()"
-          style="display: none; align-items: center; gap: 0.75rem; background: var(--bg-panel); padding: 0.5rem 1.2rem; border-radius: 9999px; border: 1px solid var(--border); font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.3s ease;"
-          onmouseover="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 10px var(--shadow-glow)'"
-          onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none'">
+
+        <!-- User profile widget -->
+        <div id="userProfile" onclick="openProfileModal()" class="flex items-center gap-2 bg-brand-panel border border-white/10 px-4 py-1.5 rounded-full text-xs font-medium cursor-pointer hover:border-indigo-500/50 hover:shadow-[0_0_10px_rgba(99,102,241,0.15)] transition-all duration-300" style="display: none;">
           <span id="profileIcon">👤</span>
-          <span id="profileName">Guest</span>
+          <span id="profileName" class="text-white">Guest</span>
         </div>
       </div>
     </div>
   </header>
 
-  <main>
-    <!-- Left Section: Search and Details -->
-    <div class="left-column" style="display: flex; flex-direction: column; gap: 2rem;">
-      <section class="panel">
-        <h3>🔍 Search Movie</h3>
-        <div class="form-group">
-          <label for="movieTitle">Movie Title</label>
-          <input id="movieTitle" placeholder="e.g. Inception or The Dark Knight"
-            onkeydown="if(event.key==='Enter') searchMovie()">
+  <!-- Main Dashboard Content Layout -->
+  <main class="relative z-10 flex-1 max-w-6xl w-full mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+    
+    <!-- Left Column: Search & Details -->
+    <div class="space-y-8 flex flex-col">
+      <section class="glass-card rounded-3xl p-6 md:p-8 flex-grow">
+        <h3 class="text-lg font-bold text-white border-l-4 border-indigo-500 pl-3 mb-6 flex items-center gap-2">
+          <span>🔍</span> Search Movie Database
+        </h3>
+        
+        <div class="mb-4">
+          <label class="block text-xs font-semibold text-brand-textMuted uppercase tracking-wider mb-2" for="movieTitle">Movie Title</label>
+          <input id="movieTitle" placeholder="e.g. Inception or The Dark Knight" onkeydown="if(event.key==='Enter') searchMovie()" class="w-full bg-brand-surface border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all duration-300">
         </div>
-        <button onclick="searchMovie()">
-          <span>Search Database</span>
+        
+        <button onclick="searchMovie()" class="w-full py-3 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-all duration-300 active:scale-[0.98] shadow-md shadow-indigo-500/10 cursor-pointer text-sm">
+          <span>Search OMDb</span>
         </button>
 
-        <div id="movieDetails">
-          <div class="empty-state">Search for a movie to view its details and OMDB/IMDB information.</div>
+        <div id="movieDetails" class="mt-6">
+          <div class="text-center text-xs text-brand-textMuted py-8">Search for a movie title above to query details from the database.</div>
         </div>
       </section>
     </div>
 
-    <!-- Right Section: Add & View Reviews -->
-    <div class="right-column" style="display: flex; flex-direction: column; gap: 2rem;">
-      <section class="panel">
-        <h3>✍️ Write Movie Review</h3>
-        <div class="form-group">
-          <label for="reviewMovieId">Movie IMDB ID</label>
-          <input id="reviewMovieId" placeholder="e.g. tt0111161 (Find via Search)">
+    <!-- Right Column: Add & View Reviews -->
+    <div class="space-y-8 flex flex-col">
+      <!-- Write Review -->
+      <section class="glass-card rounded-3xl p-6 md:p-8">
+        <h3 class="text-lg font-bold text-white border-l-4 border-indigo-500 pl-3 mb-6 flex items-center gap-2">
+          <span>✍️</span> Write Movie Review
+        </h3>
+        
+        <div class="mb-4">
+          <label class="block text-xs font-semibold text-brand-textMuted uppercase tracking-wider mb-2" for="reviewMovieId">Movie IMDB ID</label>
+          <input id="reviewMovieId" placeholder="e.g. tt0111161 (Prefilled by search)" class="w-full bg-brand-surface border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500 transition-all duration-300">
         </div>
-        <div class="form-group">
-          <label for="ipfsHash">Review IPFS Hash / Text Content</label>
-          <input id="ipfsHash" placeholder="e.g. QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco">
+
+        <div class="mb-4">
+          <label class="block text-xs font-semibold text-brand-textMuted uppercase tracking-wider mb-2" for="ipfsHash">Review Content / IPFS Hash</label>
+          <input id="ipfsHash" placeholder="Your review text or gateway CID Qm..." class="w-full bg-brand-surface border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500 transition-all duration-300">
         </div>
-        <div class="form-group">
-          <label for="rating">Rating (1 to 5 Stars)</label>
-          <input id="rating" type="number" min="1" max="5" placeholder="5">
+
+        <div class="mb-5">
+          <label class="block text-xs font-semibold text-brand-textMuted uppercase tracking-wider mb-2" for="rating">Rating (1 to 5 Stars)</label>
+          <input id="rating" type="number" min="1" max="5" placeholder="5" class="w-full bg-brand-surface border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500 transition-all duration-300">
         </div>
-        <button onclick="addReview()">
+
+        <button onclick="addReview()" class="w-full py-3.5 px-6 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white font-semibold rounded-xl transition-all duration-300 active:scale-[0.98] shadow-lg shadow-indigo-500/10 cursor-pointer text-sm">
           <span>Submit Review to Blockchain</span>
         </button>
       </section>
 
-      <section class="panel">
-        <h3>✨ On-Chain Reviews</h3>
-        <div class="form-group">
-          <label for="viewMovieId">Movie IMDB ID</label>
-          <input id="viewMovieId" placeholder="e.g. tt0111161" onkeydown="if(event.key==='Enter') viewReviews()">
+      <!-- View Reviews -->
+      <section class="glass-card rounded-3xl p-6 md:p-8 flex-grow">
+        <h3 class="text-lg font-bold text-white border-l-4 border-indigo-500 pl-3 mb-6 flex items-center gap-2">
+          <span>✨</span> On-Chain Reviews
+        </h3>
+        
+        <div class="mb-4">
+          <label class="block text-xs font-semibold text-brand-textMuted uppercase tracking-wider mb-2" for="viewMovieId">Movie IMDB ID</label>
+          <input id="viewMovieId" placeholder="e.g. tt0111161" onkeydown="if(event.key==='Enter') viewReviews()" class="w-full bg-brand-surface border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500 transition-all duration-300">
         </div>
-        <button onclick="viewReviews()"
-          style="background: var(--bg-panel); border: 1px solid var(--primary); color: var(--primary); margin-bottom: 1rem;">
+
+        <button onclick="viewReviews()" class="w-full py-3 px-6 bg-brand-panel hover:bg-brand-surface border border-indigo-500/50 hover:border-indigo-500 text-indigo-400 hover:text-indigo-300 font-semibold rounded-xl transition-all duration-300 active:scale-[0.98] cursor-pointer mb-6 text-sm">
           <span>Fetch Reviews</span>
         </button>
 
-        <div id="reviewsOutput">
-          <div class="empty-state">Enter a Movie IMDB ID above to query reviews stored on the blockchain.</div>
+        <div id="reviewsOutput" class="space-y-4">
+          <div class="text-center text-xs text-brand-textMuted py-4">Enter a Movie IMDB ID above to query reviews stored on the blockchain.</div>
         </div>
       </section>
     </div>
@@ -528,11 +209,171 @@
 
   <div class="toast-container" id="toastContainer"></div>
 
-  <footer>
+  <footer class="relative z-10 w-full py-6 text-center text-xs text-brand-textMuted border-t border-white/5 mt-auto">
     <p>CineReview DApp &copy; 2026. Running on Ethereum Sepolia Testnet. Built with Hardhat & Ethers.js.</p>
   </footer>
 
+  <!-- Profile Modal -->
+  <div id="profileModal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md opacity-0 transition-opacity duration-300">
+    <div class="glass-modal max-w-sm w-full rounded-3xl p-6 relative transform scale-95 transition-all duration-300">
+      <span onclick="closeProfileModal()" class="absolute top-4 right-4 text-xl text-brand-textMuted hover:text-white cursor-pointer transition-colors">&times;</span>
+
+      <div id="modalAvatar" class="w-16 h-16 rounded-full bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center text-2xl text-white mx-auto mb-4 shadow-lg shadow-indigo-500/20 overflow-hidden">
+        👤
+      </div>
+
+      <h3 class="text-center text-white font-bold text-base mb-1" id="modalUsername">User Profile</h3>
+      <p class="text-center text-xs text-brand-accent font-semibold mb-6">Verified Reviewer</p>
+
+      <div class="space-y-3 bg-black/20 p-4 rounded-xl border border-white/5 text-xs mb-6">
+        <div class="flex justify-between">
+          <span class="text-brand-textMuted">Session Type:</span>
+          <span id="modalSessionType" class="text-white font-medium">MetaMask Wallet</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-brand-textMuted">Status:</span>
+          <span class="text-brand-accent font-semibold">Active</span>
+        </div>
+        <div class="flex-col pt-2 border-t border-white/5 flex gap-1">
+          <span class="text-brand-textMuted">Identifier (Address):</span>
+          <span id="modalUserIdentifier" class="font-mono text-indigo-400 break-all">0x000...</span>
+        </div>
+      </div>
+
+      <button onclick="handleLogout()" class="w-full py-3 bg-red-500/10 hover:bg-red-500/25 border border-red-500/40 text-red-400 font-bold rounded-xl transition-all duration-300 cursor-pointer text-xs">
+        Sign Out & Disconnect
+      </button>
+    </div>
+  </div>
+
   <script>
+    /* UI AUDIO SYNTHESIS via Web Audio API */
+    let audioCtx = null;
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    function playBeep(freq = 440, duration = 0.1, type = 'sine') {
+      try {
+        initAudio();
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (err) {}
+    }
+
+    function playSuccessSound() {
+      setTimeout(() => playBeep(523.25, 0.15, 'triangle'), 0); // C5
+      setTimeout(() => playBeep(659.25, 0.15, 'triangle'), 80); // E5
+      setTimeout(() => playBeep(783.99, 0.25, 'triangle'), 160); // G5
+    }
+
+    function playErrorSound() {
+      setTimeout(() => playBeep(180, 0.2, 'sawtooth'), 0);
+      setTimeout(() => playBeep(140, 0.3, 'sawtooth'), 120);
+    }
+
+    /* INTERACTIVE CANVAS BACKGROUND: Spotlights & Cinema Dust */
+    const canvas = document.getElementById("backgroundCanvas");
+    const ctx = canvas.getContext("2d");
+    
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+    let mouse = { x: width / 2, y: height / 2, targetX: width / 2, targetY: height / 2 };
+
+    window.addEventListener('resize', () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      mouse.targetX = e.clientX;
+      mouse.targetY = e.clientY;
+    });
+
+    // Dust particles
+    const particles = [];
+    const particleCount = 60;
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        radius: Math.random() * 1.8 + 0.4,
+        speedX: Math.random() * 0.4 - 0.2,
+        speedY: Math.random() * 0.3 - 0.1,
+        alpha: Math.random() * 0.4 + 0.1
+      });
+    }
+
+    function animateBackground() {
+      mouse.x += (mouse.targetX - mouse.x) * 0.05;
+      mouse.y += (mouse.targetY - mouse.y) * 0.05;
+
+      ctx.fillStyle = "#080b11";
+      ctx.fillRect(0, 0, width, height);
+
+      // Projector Light 1
+      const grad1 = ctx.createRadialGradient(
+        width * 0.15 + (mouse.x * 0.05), height * 0.15 + (mouse.y * 0.05), 10,
+        width * 0.15, height * 0.15, Math.max(width, height) * 0.5
+      );
+      grad1.addColorStop(0, 'rgba(99, 102, 241, 0.15)');
+      grad1.addColorStop(0.5, 'rgba(99, 102, 241, 0.03)');
+      grad1.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad1;
+      ctx.fillRect(0, 0, width, height);
+
+      // Mouse Spotlight
+      const grad2 = ctx.createRadialGradient(
+        mouse.x, mouse.y, 0,
+        mouse.x, mouse.y, Math.max(width, height) * 0.3
+      );
+      grad2.addColorStop(0, 'rgba(217, 70, 239, 0.08)');
+      grad2.addColorStop(0.5, 'rgba(217, 70, 239, 0.015)');
+      grad2.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad2;
+      ctx.fillRect(0, 0, width, height);
+
+      // Render dust
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.x += p.speedX;
+        p.y += p.speedY;
+
+        if (p.x < 0) p.x = width;
+        if (p.x > width) p.x = 0;
+        if (p.y < 0) p.y = height;
+        if (p.y > height) p.y = 0;
+
+        const distToMouse = Math.hypot(p.x - mouse.x, p.y - mouse.y);
+        let illumination = 1.0;
+        if (distToMouse < 250) {
+          illumination += (1 - distToMouse / 250) * 1.5;
+        }
+
+        ctx.fillStyle = `rgba(148, 163, 184, ${p.alpha * illumination})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      requestAnimationFrame(animateBackground);
+    }
+    animateBackground();
+  </script>
+
+  <script>
+    /* BLOCKCHAIN & CONTRACT CONFIGURATION */
     const contractAddress = "0xb37d92fE54E3D0403ea27EE8d4faa8A8e873666d"; // Deployed contract address
     const contractABI = [
       {
@@ -660,20 +501,32 @@
     const apiKey = "df0f1a8e";
     let provider, signer, contract;
 
+    /* DYNAMIC TOAST SYSTEM */
     function showToast(message, type = 'info') {
       const container = document.getElementById("toastContainer");
       const toast = document.createElement("div");
-      toast.className = `toast ${type}`;
+      
+      let borderColor = 'var(--primary)';
+      if (type === 'success') borderColor = 'var(--accent)';
+      else if (type === 'error') borderColor = '#ef4444';
+      else if (type === 'warning') borderColor = '#f59e0b';
+
+      toast.className = `toast-card p-4 rounded-xl shadow-lg border border-white/5 flex justify-between items-center gap-3 transition-all duration-300 transform translate-x-12 opacity-0 text-xs`;
+      toast.style.borderLeft = `4px solid ${borderColor}`;
       toast.innerHTML = `
-        <span>${message}</span>
-        <span class="toast-close" onclick="this.parentElement.remove()">&times;</span>
+        <span class="font-medium text-slate-100">${message}</span>
+        <button class="text-brand-textMuted hover:text-white text-base cursor-pointer" onclick="this.parentElement.remove()">&times;</button>
       `;
       container.appendChild(toast);
 
-      // Auto dismiss after 5s
+      setTimeout(() => {
+        toast.classList.remove("translate-x-12", "opacity-0");
+      }, 50);
+
       setTimeout(() => {
         if (toast.parentElement) {
-          toast.remove();
+          toast.classList.add("opacity-0", "translate-y-2");
+          setTimeout(() => toast.remove(), 300);
         }
       }, 5000);
     }
@@ -700,17 +553,16 @@
         const userPicture = sessionStorage.getItem("userPicture");
         if (profileIcon) {
           if (userPicture) {
-            profileIcon.innerHTML = `<img src="${userPicture}" referrerpolicy="no-referrer" style="width: 20px; height: 20px; border-radius: 50%; vertical-align: middle; object-fit: cover;">`;
+            profileIcon.innerHTML = `<img src="${userPicture}" referrerpolicy="no-referrer" class="w-5 h-5 rounded-full inline-block object-cover">`;
           } else {
             profileIcon.innerHTML = "👤";
           }
         }
       }
 
-      // Silent/Eager MetaMask check (don't force popup if user didn't request connection yet, or is already authorized)
+      // Silent/Eager MetaMask check (don't force popup if already authorized)
       if (typeof window.ethereum !== "undefined") {
         try {
-          // Check if already authorized
           const accounts = await window.ethereum.request({ method: "eth_accounts" });
           if (accounts.length > 0) {
             const currentChainId = await window.ethereum.request({ method: "eth_chainId" });
@@ -729,6 +581,7 @@
           if (accounts.length > 0) {
             initializeWalletConnection(accounts[0]);
             showToast("Active MetaMask account updated!", "info");
+            playSuccessSound();
           } else {
             // Disconnect state
             const connectBtn = document.getElementById("connectWalletBtn");
@@ -736,6 +589,7 @@
             if (connectBtn) connectBtn.style.display = "flex";
             if (statusDiv) statusDiv.style.display = "none";
             showToast("MetaMask account disconnected.", "warning");
+            playErrorSound();
           }
         });
 
@@ -753,6 +607,7 @@
         const currentChainId = await window.ethereum.request({ method: "eth_chainId" });
         if (currentChainId !== SEPOLIA_CHAIN_ID) {
           showToast("Switching network to Sepolia...", "info");
+          playBeep(350, 0.15);
           try {
             await window.ethereum.request({
               method: "wallet_switchEthereumChain",
@@ -781,10 +636,12 @@
                 return true;
               } catch (addError) {
                 showToast("Failed to add Sepolia network: " + addError.message, "error");
+                playErrorSound();
                 return false;
               }
             } else {
               showToast("Failed to switch network: " + switchError.message, "error");
+              playErrorSound();
               return false;
             }
           }
@@ -792,6 +649,7 @@
         return true;
       } catch (err) {
         showToast("Error checking network: " + err.message, "error");
+        playErrorSound();
         return false;
       }
     }
@@ -808,8 +666,8 @@
 
       if (connectBtn) connectBtn.style.display = "none";
       if (statusDiv) statusDiv.style.display = "flex";
-      if (indicator) indicator.className = "wallet-indicator connected";
-      if (label) label.innerHTML = `<span class="wallet-address">${address.substring(0, 6)}...${address.substring(address.length - 4)}</span>`;
+      if (indicator) indicator.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]";
+      if (label) label.innerHTML = `<span class="font-mono text-xs text-brand-textMuted">${address.substring(0, 6)}...${address.substring(address.length - 4)}</span>`;
 
       // Update navbar profile identity and session storage if logged in via Web3 wallet
       const userSession = sessionStorage.getItem("user");
@@ -823,6 +681,7 @@
     }
 
     async function connectWallet() {
+      playBeep(440, 0.1);
       if (typeof window.ethereum !== "undefined") {
         try {
           const isSepolia = await ensureSepoliaNetwork();
@@ -834,16 +693,20 @@
           const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
           await initializeWalletConnection(accounts[0]);
           showToast("Successfully connected Web3 wallet!", "success");
+          playSuccessSound();
         } catch (err) {
+          playErrorSound();
           showToast("Wallet connection failed: " + err.message, "error");
         }
       } else {
+        playErrorSound();
         showToast("MetaMask/Web3 wallet not detected! Please install the extension.", "warning");
       }
     }
 
     function handleLogout(e) {
       if (e) e.preventDefault();
+      playBeep(220, 0.2, 'sawtooth');
       sessionStorage.removeItem("user");
       showToast("Logging out...", "info");
       setTimeout(() => {
@@ -852,6 +715,7 @@
     }
 
     function openProfileModal() {
+      playBeep(350, 0.1);
       const modal = document.getElementById("profileModal");
       const userSession = sessionStorage.getItem("user") || "Guest";
       const userAuthType = sessionStorage.getItem("userAuthType");
@@ -860,7 +724,6 @@
 
       document.getElementById("modalUsername").textContent = userSession.startsWith("0x") && userSession.length === 42 ? "Web3 Account" : userSession;
 
-      // Determine auth method
       let authType = userAuthType || "Credential Login";
       if (!userAuthType) {
         if (userSession.endsWith("User")) {
@@ -876,30 +739,29 @@
       const modalAvatar = document.getElementById("modalAvatar");
       if (modalAvatar) {
         if (userPicture) {
-          modalAvatar.innerHTML = `<img src="${userPicture}" referrerpolicy="no-referrer" style="width: 100%; height: 100%; object-fit: cover;">`;
+          modalAvatar.innerHTML = `<img src="${userPicture}" referrerpolicy="no-referrer" class="w-full h-full object-cover">`;
         } else {
           modalAvatar.innerHTML = "👤";
         }
       }
 
       modal.style.display = "flex";
-      // Force reflow for transition
       setTimeout(() => {
         modal.style.opacity = "1";
-        modal.querySelector(".panel").style.transform = "scale(1)";
+        modal.querySelector(".glass-modal").style.transform = "scale(1)";
       }, 10);
     }
 
     function closeProfileModal() {
+      playBeep(250, 0.1);
       const modal = document.getElementById("profileModal");
       modal.style.opacity = "0";
-      modal.querySelector(".panel").style.transform = "scale(0.9)";
+      modal.querySelector(".glass-modal").style.transform = "scale(0.9)";
       setTimeout(() => {
         modal.style.display = "none";
       }, 300);
     }
 
-    // Close modal if clicking outside the card
     document.addEventListener("click", function (event) {
       const modal = document.getElementById("profileModal");
       if (event.target === modal) {
@@ -908,6 +770,7 @@
     });
 
     async function searchMovie() {
+      playBeep(440, 0.08);
       const title = document.getElementById("movieTitle").value.trim();
       if (!title) {
         showToast("Please enter a movie title to search.", "warning");
@@ -915,7 +778,7 @@
       }
 
       const detailsDiv = document.getElementById("movieDetails");
-      detailsDiv.innerHTML = '<div class="empty-state">Searching OMDB database...</div>';
+      detailsDiv.innerHTML = '<div class="text-center text-xs text-brand-textMuted py-8 animate-pulse">Searching OMDB database...</div>';
 
       try {
         const response = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${apiKey}`);
@@ -923,38 +786,41 @@
 
         if (data.Response === "True") {
           detailsDiv.innerHTML = `
-            <div class="movie-card">
-              ${data.Poster && data.Poster !== "N/A" ? `<img src="${data.Poster}" alt="${data.Title} Poster" class="movie-poster">` : ''}
-              <div class="movie-info">
-                <h4 class="movie-title">${data.Title}</h4>
-                <div class="movie-meta">${data.Year} &bull; ${data.Genre} &bull; Rated: ${data.Rated}</div>
-                <p class="movie-plot"><strong>Plot:</strong> ${data.Plot}</p>
-                <div class="movie-details-list">
+            <div class="glass-card rounded-2xl p-4 flex flex-col sm:flex-row gap-4 mt-2 border border-white/5 animate-fadeIn">
+              ${data.Poster && data.Poster !== "N/A" ? `<img src="${data.Poster}" alt="${data.Title} Poster" class="w-28 rounded-lg object-cover mx-auto sm:mx-0 shadow-lg">` : ''}
+              <div class="flex-1 flex flex-col justify-between">
+                <div>
+                  <h4 class="text-base font-extrabold text-white mb-1">${data.Title}</h4>
+                  <div class="text-xs text-indigo-400 font-semibold mb-2">${data.Year} &bull; ${data.Genre} &bull; Rated: ${data.Rated}</div>
+                  <p class="text-xs text-brand-textMuted leading-relaxed mb-3"><strong>Plot:</strong> ${data.Plot}</p>
+                </div>
+                <div class="text-[11px] text-brand-textMuted border-t border-white/5 pt-2">
                   <p><strong>Director:</strong> ${data.Director}</p>
                   <p><strong>Actors:</strong> ${data.Actors}</p>
-                  <p style="margin-top: 0.5rem; color: var(--secondary); font-weight: 500;">
-                    <strong>IMDB ID:</strong> ${data.imdbID}
-                  </p>
+                  <p class="text-brand-secondary font-bold mt-1">IMDB ID: ${data.imdbID}</p>
                 </div>
               </div>
             </div>
           `;
 
-          // Prefill form fields to improve UX
           document.getElementById("reviewMovieId").value = data.imdbID;
           document.getElementById("viewMovieId").value = data.imdbID;
           showToast(`Found details for "${data.Title}"!`, "success");
+          playSuccessSound();
         } else {
-          detailsDiv.innerHTML = `<div class="empty-state" style="color: var(--error)">Movie not found in database.</div>`;
+          detailsDiv.innerHTML = `<div class="text-center text-xs text-red-400 py-8">Movie not found in database.</div>`;
           showToast("Movie not found.", "error");
+          playErrorSound();
         }
       } catch (err) {
-        detailsDiv.innerHTML = `<div class="empty-state" style="color: var(--error)">Error fetching movie metadata.</div>`;
+        detailsDiv.innerHTML = `<div class="text-center text-xs text-red-400 py-8">Error fetching movie metadata.</div>`;
         showToast("Failed to search movie database: " + err.message, "error");
+        playErrorSound();
       }
     }
 
     async function addReview() {
+      playBeep(440, 0.1);
       const movieId = document.getElementById("reviewMovieId").value.trim();
       const ipfsHash = document.getElementById("ipfsHash").value.trim();
       const ratingInput = document.getElementById("rating").value;
@@ -962,19 +828,23 @@
 
       if (!movieId) {
         showToast("Please enter a Movie IMDB ID.", "warning");
+        playErrorSound();
         return;
       }
       if (!ipfsHash) {
         showToast("Please enter a review content or IPFS Hash.", "warning");
+        playErrorSound();
         return;
       }
       if (isNaN(rating) || rating < 1 || rating > 5) {
         showToast("Rating must be a whole number between 1 and 5.", "warning");
+        playErrorSound();
         return;
       }
 
       if (!contract) {
         showToast("Contract not loaded. Please connect your MetaMask wallet.", "error");
+        playErrorSound();
         return;
       }
 
@@ -990,37 +860,42 @@
         showToast("Transaction submitted! Waiting for block confirmation...", "info");
         await tx.wait();
         showToast("Review stored successfully on the blockchain!", "success");
+        playSuccessSound();
 
-        // Refresh reviews automatically
         document.getElementById("viewMovieId").value = movieId;
         viewReviews();
       } catch (error) {
+        playErrorSound();
         showToast("Failed to add review: " + (error.data?.message || error.message), "error");
       }
     }
 
     async function viewReviews() {
+      playBeep(440, 0.08);
       const movieId = document.getElementById("viewMovieId").value.trim();
       const reviewsOutput = document.getElementById("reviewsOutput");
 
       if (!movieId) {
         showToast("Please enter a Movie IMDB ID.", "warning");
+        playErrorSound();
         return;
       }
 
       if (!contract) {
         showToast("Contract not loaded. Please connect your MetaMask wallet.", "error");
+        playErrorSound();
         return;
       }
 
-      reviewsOutput.innerHTML = '<div class="empty-state">Loading on-chain reviews...</div>';
+      reviewsOutput.innerHTML = '<div class="text-center text-xs text-brand-textMuted py-4 animate-pulse">Loading on-chain reviews...</div>';
 
       try {
         const reviews = await contract.getReviews(movieId);
 
         if (reviews.length === 0) {
-          reviewsOutput.innerHTML = '<div class="empty-state">No reviews found for this movie on-chain yet. Be the first to add one!</div>';
+          reviewsOutput.innerHTML = '<div class="text-center text-xs text-brand-textMuted py-4">No reviews found for this movie on-chain yet. Be the first to add one!</div>';
           showToast("No reviews found for this movie.", "info");
+          playBeep(330, 0.1);
           return;
         }
 
@@ -1031,15 +906,15 @@
           const formattedDate = new Date(review.timestamp * 1000).toLocaleString();
 
           const card = document.createElement("div");
-          card.className = "review-card";
+          card.className = "bg-black/20 p-4 rounded-xl border border-white/5 text-xs space-y-2 flex flex-col justify-between";
           card.innerHTML = `
-            <div class="review-header">
-              <span class="stars">${starsHtml}</span>
-              <span class="reviewer-address">${review.reviewer.substring(0, 6)}...${review.reviewer.substring(review.reviewer.length - 4)}</span>
+            <div class="flex justify-between items-center text-[11px] text-brand-textMuted">
+              <span class="text-yellow-400 font-bold tracking-wider">${starsHtml}</span>
+              <span class="font-mono text-indigo-400">${review.reviewer.substring(0, 6)}...${review.reviewer.substring(review.reviewer.length - 4)}</span>
             </div>
-            <div class="ipfs-content-box" style="margin: 0.5rem 0; font-size: 0.95rem; line-height: 1.4; color: var(--text-main);">Loading review content from IPFS...</div>
-            <div class="ipfs-hash-box" style="font-size: 0.75rem; color: var(--text-muted); opacity: 0.7; font-family: monospace; word-break: break-all;">IPFS Hash: ${review.ipfsHash}</div>
-            <div class="review-meta">
+            <div class="ipfs-content-box text-slate-100 text-sm leading-relaxed my-1">Loading review content from IPFS...</div>
+            <div class="ipfs-hash-box text-[10px] text-brand-textMuted font-mono break-all opacity-60">IPFS Hash: ${review.ipfsHash}</div>
+            <div class="flex justify-between items-center text-[10px] text-brand-textMuted border-t border-white/5 pt-2 mt-1">
               <span>Reviewed by user</span>
               <span>${formattedDate}</span>
             </div>
@@ -1072,60 +947,13 @@
         });
 
         showToast(`Retrieved ${reviews.length} reviews from blockchain!`, "success");
+        playSuccessSound();
       } catch (error) {
-        reviewsOutput.innerHTML = `<div class="empty-state" style="color: var(--error)">Error querying contract. Make sure MetaMask is connected to the Ethereum Sepolia Testnet.</div>`;
+        playErrorSound();
+        reviewsOutput.innerHTML = `<div class="text-center text-xs text-red-400 py-4">Error querying contract. Make sure MetaMask is connected to the Ethereum Sepolia Testnet.</div>`;
         showToast("Error retrieving reviews: " + (error.data?.message || error.message), "error");
       }
     }
   </script>
-
-  <!-- Profile Modal -->
-  <div id="profileModal"
-    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 1000; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s ease;">
-    <div class="panel"
-      style="width: 90%; max-width: 400px; padding: 2.5rem; text-align: center; border-radius: 20px; transform: scale(0.9); transition: transform 0.3s ease; position: relative;">
-      <span onclick="closeProfileModal()"
-        style="position: absolute; top: 15px; right: 20px; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; transition: color 0.2s;"
-        onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--text-muted)'">&times;</span>
-
-      <div id="modalAvatar"
-        style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; margin: 0 auto 1.5rem auto; box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4); overflow: hidden;">
-        👤
-      </div>
-
-      <h3 style="border: none; padding-left: 0; justify-content: center; font-size: 1.4rem; margin-bottom: 0.5rem;"
-        id="modalUsername">User Profile</h3>
-      <p style="font-size: 0.85rem; color: var(--accent); font-weight: 600; margin-bottom: 2rem;" id="modalUserRole">
-        Verified Reviewer</p>
-
-      <div
-        style="text-align: left; display: flex; flex-direction: column; gap: 0.75rem; background: rgba(0,0,0,0.2); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 2rem; font-size: 0.9rem;">
-        <div style="display: flex; justify-content: space-between;">
-          <span style="color: var(--text-muted);">Session Type:</span>
-          <span id="modalSessionType" style="font-weight: 500;">Credentials</span>
-        </div>
-        <div style="display: flex; justify-content: space-between;">
-          <span style="color: var(--text-muted);">Status:</span>
-          <span style="color: var(--accent); font-weight: 600;">Active</span>
-        </div>
-        <div style="display: flex; justify-content: space-between;">
-          <span style="color: var(--text-muted);">Created:</span>
-          <span style="font-weight: 500;">July 9, 2026</span>
-        </div>
-        <div
-          style="display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.25rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.5rem;">
-          <span style="color: var(--text-muted); font-size: 0.8rem;">Identifier:</span>
-          <span id="modalUserIdentifier"
-            style="font-family: monospace; font-size: 0.8rem; word-break: break-all; color: var(--primary);">0x000...</span>
-        </div>
-      </div>
-
-      <button onclick="handleLogout()"
-        style="background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.25);">
-        <span>Sign Out & Disconnect</span>
-      </button>
-    </div>
-  </div>
 </body>
-
 </html>
